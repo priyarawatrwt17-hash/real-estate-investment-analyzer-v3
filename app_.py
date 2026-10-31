@@ -67,32 +67,104 @@ h1, h2, h3 {
     color: white;
     border: 1px solid #42A5FF;
 }
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] a {
+    color: #FFFFFF !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+}
+/* ===== PREMIUM DASHBOARD ENHANCEMENTS ===== */
 
-</style>
+.stApp {
+    background: linear-gradient(135deg, #080D18, #101B30);
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: #101A2D;
+    border-right: 1px solid #263B5C;
+}
+
+/* Main content spacing */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1500px;
+}
+
+/* KPI cards */
+[data-testid="stMetric"] {
+    background: linear-gradient(145deg, #172943, #111C33);
+    border: 1px solid #2876B8;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 5px 18px rgba(0, 120, 255, 0.12);
+    transition: all 0.25s ease;
+}
+
+[data-testid="stMetric"]:hover {
+    border-color: #42A5FF;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 120, 255, 0.22);
+}
+
+/* Section headings */
+h1, h2, h3 {
+    letter-spacing: 0.3px;
+}
+
+/* Chart panels */
+[data-testid="stPlotlyChart"] {
+    background: #111C33;
+    border: 1px solid #263B5C;
+    border-radius: 14px;
+    padding: 10px;
+}
+
+/* Buttons */
+.stButton > button {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* Dividers */
+hr {
+    border-color: #263B5C;
+}
+
+[data-testid="stHeader"] {
+    background-color: #0B1F3A !important;
+    position: relative;
+    height: 75px;
+}
+
+[data-testid="stHeader"]::after {
+    content: "PROPERTY MARKET INTELLIGENCE\A DATA-DRIVEN INVESTMENT ANALYSIS";
+    white-space: pre;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.8;
+    letter-spacing: 1px;
+    text-align: center;
+}</style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# SIDEBAR NAVIGATION
-# ==========================================
-
+# SIDEBAR BRANDING
 st.sidebar.title("🏡 REAL ESTATE")
 st.sidebar.caption("INVESTMENT ANALYZER")
 st.sidebar.markdown("---")
-
-selected_page = st.sidebar.radio(
-    "NAVIGATION",
-    [
-        "Executive Overview",
-        "Market Analysis",
-        "Location Insights",
-        "Property Explorer",
-        "Investment Classifier"
-    ]
-)
-
-st.sidebar.markdown("---")
 st.sidebar.caption("Real Estate Market Intelligence")
- 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "real_estate_model.pkl"
 DATA_PATH = BASE_DIR / "cleaned_real_estate-.csv"
@@ -233,6 +305,72 @@ st.caption(
     "Unit note: Price_per_SqFt is stored in lakhs per sq.ft. in the supplied dataset; "
     "the KPI converts it to rupees per sq.ft. (1 lakh = ₹100,000)."
 )
+
+# --------------------------------------------------
+# MARKET INSIGHT CARDS
+# --------------------------------------------------
+st.subheader("Market Insights")
+
+insight_col1, insight_col2, insight_col3, insight_col4 = st.columns(4)
+
+# 1. City with the highest number of listed properties
+city_counts = df["City"].dropna().value_counts()
+
+if not city_counts.empty:
+    top_city = city_counts.index[0]
+    city_share = (city_counts.iloc[0] / len(df)) * 100
+else:
+    top_city = "N/A"
+    city_share = 0
+
+# 2. Property type with the highest average price
+type_prices = df.groupby("Property_Type")["Price_in_Lakhs"].mean().dropna()
+
+if not type_prices.empty:
+    premium_type = type_prices.idxmax()
+    premium_price = type_prices.max()
+else:
+    premium_type = "N/A"
+    premium_price = 0
+
+# 3. Most common BHK configuration
+bhk_counts = df["BHK"].dropna().value_counts()
+
+if not bhk_counts.empty:
+    popular_bhk = bhk_counts.index[0]
+    bhk_share = (bhk_counts.iloc[0] / len(df)) * 100
+else:
+    popular_bhk = "N/A"
+    bhk_share = 0
+
+# 4. Highest-priced locality by average price
+locality_prices = df.groupby("Locality")["Price_in_Lakhs"].mean().dropna()
+
+if not locality_prices.empty:
+    top_locality = locality_prices.idxmax()
+    locality_price = locality_prices.max()
+else:
+    top_locality = "N/A"
+    locality_price = 0
+
+with insight_col1:
+    st.metric("Leading City", str(top_city))
+    st.caption(f"{city_share:.1f}% of filtered properties")
+
+with insight_col2:
+    st.metric("Premium Property Type", str(premium_type))
+    st.caption(f"Average price: ₹{premium_price:,.2f} Lakhs")
+
+with insight_col3:
+    st.metric("Most Common Configuration", f"{popular_bhk} BHK" if popular_bhk != "N/A" else "N/A")
+    st.caption(f"{bhk_share:.1f}% of filtered properties")
+
+with insight_col4:
+    st.metric("Top-Priced Locality", str(top_locality))
+    st.caption(f"Average price: ₹{locality_price:,.2f} Lakhs")
+
+st.divider()
+
 st.divider()
 
 # Two-column dashboard layout
@@ -373,6 +511,121 @@ with right:
         "The source dataset uses generated locality identifiers, "
         "not actual locality names."
     )
+    
+# --------------------------------------------------
+# KEY BUSINESS FINDINGS
+# --------------------------------------------------
+st.divider()
+st.header("Key Business Findings")
+st.caption("Data-driven observations based on the current market filters")
+
+# Calculate findings from the filtered dataset
+if not df.empty:
+
+    total_filtered = len(df)
+
+    # City concentration
+    city_summary = df["City"].value_counts()
+    if not city_summary.empty:
+        leading_city = city_summary.index[0]
+        leading_city_share = city_summary.iloc[0] / total_filtered * 100
+    else:
+        leading_city = "N/A"
+        leading_city_share = 0
+
+    # Property type pricing gap
+    type_summary = df.groupby("Property_Type")["Price_in_Lakhs"].mean().dropna()
+    if not type_summary.empty:
+        highest_type = type_summary.idxmax()
+        highest_type_price = type_summary.max()
+        lowest_type = type_summary.idxmin()
+        lowest_type_price = type_summary.min()
+        price_gap = highest_type_price - lowest_type_price
+    else:
+        highest_type = lowest_type = "N/A"
+        highest_type_price = lowest_type_price = price_gap = 0
+
+    # BHK distribution
+    bhk_summary = df["BHK"].value_counts()
+    if not bhk_summary.empty:
+        leading_bhk = bhk_summary.index[0]
+        leading_bhk_share = bhk_summary.iloc[0] / total_filtered * 100
+    else:
+        leading_bhk = "N/A"
+        leading_bhk_share = 0
+
+    # Locality pricing
+    locality_summary = df.groupby("Locality")["Price_in_Lakhs"].mean().dropna()
+    if not locality_summary.empty:
+        highest_locality = locality_summary.idxmax()
+        highest_locality_price = locality_summary.max()
+        overall_avg_price = df["Price_in_Lakhs"].mean()
+    else:
+        highest_locality = "N/A"
+        highest_locality_price = 0
+        overall_avg_price = 0
+
+    # Display findings
+    finding_col1, finding_col2 = st.columns(2)
+
+    with finding_col1:
+        st.info(
+            f"""
+            **1. Geographic concentration**
+
+            {leading_city} has the highest number of listed properties,
+            representing {leading_city_share:.1f}% of the filtered dataset.
+
+            **Business interpretation:** Property listings are most
+            concentrated in this city within the selected data.
+            """
+        )
+
+        st.info(
+            f"""
+            **2. Property pricing variation**
+
+            {highest_type} has the highest average price at
+            ₹{highest_type_price:,.2f} lakhs, while {lowest_type}
+            has the lowest at ₹{lowest_type_price:,.2f} lakhs.
+
+            **Price gap:** ₹{price_gap:,.2f} lakhs.
+
+            **Business interpretation:** Average prices differ across
+            property categories.
+            """
+        )
+
+    with finding_col2:
+        st.info(
+            f"""
+            **3. Popular property configuration**
+
+            {leading_bhk} BHK is the most frequently listed configuration,
+            accounting for {leading_bhk_share:.1f}% of filtered properties.
+
+            **Business interpretation:** This is the most common
+            configuration in the available listings.
+            """
+        )
+
+        st.info(
+            f"""
+            **4. Locality price variation**
+
+            {highest_locality} has the highest average listed price
+            at ₹{highest_locality_price:,.2f} lakhs.
+
+            Overall filtered average: ₹{overall_avg_price:,.2f} lakhs.
+
+            **Business interpretation:** This locality has the highest
+            average asking price in the selected dataset.
+            """
+        )
+
+else:
+    st.warning("No properties match the selected filters.")
+
 # --------------------------------------------------
 # 5. PROPERTY INPUT FORM
 # --------------------------------------------------
@@ -530,3 +783,4 @@ if submitted:
         except Exception as exc:
             st.error(f"Prediction failed: {type(exc).__name__}: {exc}")
             st.code(traceback.format_exc())
+
